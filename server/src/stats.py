@@ -55,7 +55,7 @@ def get_statistics(directory, base_names, use_cache=True):
                 or getmtime(get_config_py_path()) > cache_mtime
                 # Any file has changed in the dir since the cache was generated
                 or any(True for f in listdir(directory)
-                    if (getmtime(path_join(directory, f)) > cache_mtime
+                    if (getmtime(path_join(directory, f.decode('utf8')).encode('utf8')) > cache_mtime
                     # Ignore hidden files
                     and not f.startswith('.')))
                 # The configuration is newer than the cache
@@ -67,10 +67,6 @@ def get_statistics(directory, base_names, use_cache=True):
             try:
                 with open(cache_file_path, 'rb') as cache_file:
                     docstats = pickle_load(cache_file)
-                if len(docstats) != len(base_names):
-                    Messager.warning('Stats cache %s was incomplete; regenerating' % cache_file_path)
-                    generate = True
-                    docstats = []
             except UnpicklingError:
                 # Corrupt data, re-generate
                 Messager.warning('Stats cache %s was corrupted; regenerating' % cache_file_path, -1)
@@ -80,9 +76,6 @@ def get_statistics(directory, base_names, use_cache=True):
                 generate = True
     except OSError, e:
         Messager.warning('Failed checking file modification times for stats cache check; regenerating')
-        generate = True
-
-    if not use_cache:
         generate = True
 
     # "header" and types

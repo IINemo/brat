@@ -17,7 +17,7 @@ from logging import info as log_info
 from codecs import open as codecs_open
 from functools import partial
 from itertools import chain, takewhile
-from os import close as os_close, utime
+from os import utime
 from time import time
 from os.path import join as path_join
 from os.path import basename, splitext
@@ -217,7 +217,7 @@ def open_textfile(filename, mode='rU'):
     # enforce universal newline support ('U') in read modes
     if len(mode) != 0 and mode[0] == 'r' and 'U' not in mode:
         mode = mode + 'U'
-    return codecs_open(filename, mode, encoding='utf8', errors='strict')
+    return codecs_open(filename.encode('utf8'), mode, encoding='utf8', errors='strict')
 
 def __split_annotation_id(id):
     m = re_match(r'^([A-Za-z]+|#[A-Za-z]*)([0-9]+)(.*?)$', id)
@@ -262,7 +262,7 @@ class Annotations(object):
     def _select_input_files(self, document):
         """
         Given a document name (path), returns a list of the names of
-        specific annotation files relevant to the document, or the
+        specific annotation files relevant do the document, or the
         empty list if none found. For example, given "1000", may
         return ["1000.a1", "1000.a2"]. May set self._read_only flag to
         True.
@@ -296,11 +296,11 @@ class Annotations(object):
             # Our first attempts at finding the input by checking suffixes
             # failed, so we try to attach know suffixes to the path.
             sugg_path = document + '.' + JOINED_ANN_FILE_SUFF
-            if isfile(sugg_path):
+            if isfile(sugg_path.encode('utf8')):
                 # We found a joined file by adding the joined suffix
                 input_files = [sugg_path]
                 # Do we lack write permissions?
-                if not access(sugg_path, W_OK):
+                if not access(sugg_path.encode('utf8'), W_OK):
                     #TODO: Should raise an exception or warning
                     self._read_only = True
             else:
@@ -358,12 +358,7 @@ class Annotations(object):
         input_files = self._select_input_files(document)
 
         if not input_files:
-            with open('{}.{}'.format(document, JOINED_ANN_FILE_SUFF), 'w'):
-                pass
-
-            input_files = self._select_input_files(document)
-            if not input_files:
-                raise AnnotationFileNotFoundError(document)
+            raise AnnotationFileNotFoundError(document)
 
         # We then try to open the files we got using the heuristics
         #self._file_input = FileInput(openhook=hook_encoded('utf-8'))
@@ -384,8 +379,8 @@ class Annotations(object):
         #XXX: Hack to get the timestamps after parsing
         if (len(self._input_files) == 1 and
                 self._input_files[0].endswith(JOINED_ANN_FILE_SUFF)):
-            self.ann_mtime = getmtime(self._input_files[0])
-            self.ann_ctime = getctime(self._input_files[0])
+            self.ann_mtime = getmtime(self._input_files[0].encode('utf8'))
+            self.ann_ctime = getctime(self._input_files[0].encode('utf8'))
         else:
             # We don't have a single file, just set to epoch for now
             self.ann_mtime = -1
@@ -692,7 +687,7 @@ class Annotations(object):
         #XXX: Stupid and linear
         if suffix is None:
             suffix = ''
-        #XXX: Arbitrary constant!
+        #XXX: Arbitary constant!
         for suggestion in (prefix + unicode(i) + suffix for i in xrange(1, 2**15)):
             # This is getting more complicated by the minute, two checks since
             # the developers no longer know when it is an id or string.
@@ -786,7 +781,7 @@ class Annotations(object):
         equivs = type_tail.split(None)
         return EquivAnnotation(type, equivs, data_tail, source_id=input_file_path)
 
-    # Parse an old modifier annotation for backwards compatibility
+    # Parse an old modifier annotation for back-wards compability
     def _parse_modifier_annotation(self, id, data, data_tail, input_file_path):
         type, target = data.split()
         return AttributeAnnotation(target, id, type, data_tail, True, source_id=input_file_path)
@@ -958,8 +953,7 @@ class Annotations(object):
             
             # Protect the write so we don't corrupt the file
             with file_lock(path_join(WORK_DIR,
-                    str(hash(self._input_files[0].replace('/', '_')))
-                        + '.lock')
+                    basename(self._input_files[0].replace(u'/', u'_')))
                     ) as lock_file:
                 #from tempfile import NamedTemporaryFile
                 from tempfile import mkstemp
@@ -969,8 +963,7 @@ class Annotations(object):
                 #       so we hack around it.
                 #with NamedTemporaryFile('w', suffix='.ann') as tmp_file:
                 # Grab the filename, but discard the handle
-                tmp_fh, tmp_fname = mkstemp(suffix='.ann')
-                os_close(tmp_fh)
+                _, tmp_fname = mkstemp(suffix='.ann')
                 try:
                     with open_textfile(tmp_fname, 'w') as tmp_file:
                         #XXX: Temporary hack to make sure we don't write corrupted
@@ -983,7 +976,7 @@ class Annotations(object):
                         try:
                             with Annotations(tmp_file.name) as ann:
                                 # Move the temporary file onto the old file
-                                copyfile(tmp_file.name, self._input_files[0])
+                                copyfile(tmp_file.name, self._input_files[0].encode('utf8'))
                                 # As a matter of convention we adjust the modified
                                 # time of the data dir when we write to it. This
                                 # helps us to make back-ups

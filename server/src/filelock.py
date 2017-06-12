@@ -120,6 +120,7 @@ def file_lock(path, wait=0.1, timeout=1,
         PID_WARN and PID_ALLOW
     err_output - Where to print warning messages, for testing purposes
     '''
+    path = path.encode('utf8')
     start_time = time()
     while True:
         if time() - start_time > timeout:

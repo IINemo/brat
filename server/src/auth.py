@@ -104,7 +104,7 @@ def whoami():
 def allowed_to_read(real_path):
     data_path = path_join('/', relpath(real_path, DATA_DIR))
     # add trailing slash to directories, required to comply to robots.txt
-    if isdir(real_path):
+    if isdir(real_path.encode('utf8')):
         data_path = '%s/' % ( data_path )
         
     real_dir = dirname(real_path)
@@ -122,6 +122,9 @@ def allowed_to_read(real_path):
 
     #display_message('Path: %s, dir: %s, user: %s, ' % (data_path, real_dir, user), type='error', duration=-1)
 
-    return robotparser.can_fetch(user, data_path)
+
+#    import sys
+#    print >>sys.stderr, 'Data path', data_path.encode('utf8')
+    return robotparser.can_fetch(user, data_path.encode('utf8'))
 
 # TODO: Unittesting
