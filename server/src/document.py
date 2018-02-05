@@ -41,10 +41,6 @@ from auth import allowed_to_read, AccessDeniedError
 from annlog import annotation_logging_active
 
 from itertools import chain
-import urllib
-import sys
-import os
-
 
 def _fill_type_configuration(nodes, project_conf, hotkey_by_type, all_connections=None):
     # all_connections is an optimization to reduce invocations of
@@ -605,6 +601,9 @@ class IsDirectoryError(ProtocolError):
         json_dic['exception'] = 'isDirectoryError'
         return json_dic
 
+import urllib
+import sys
+import os
 
 #TODO: All this enrichment isn't a good idea, at some point we need an object
 def _enrich_json_with_text(j_dic, txt_file_path, raw_text=None):

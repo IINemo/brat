@@ -40,15 +40,17 @@ done
 shift `expr $OPTIND - 1`
 
 # Ask details for config
-
+if [ -z $BRAT_USER_NAME ]; then
 while true; do
     echo 'Please the user name that you want to use when logging into brat'
     read user_name
     if [ -n "$user_name" ]; then
 	break
     fi
-done
+done;
+fi;
 
+if [ -z $BRAT_PASSWORD ]; then
 while true; do
     echo "Please enter a brat password (this shows on screen)"
     read password
@@ -56,6 +58,7 @@ while true; do
 	break
     fi
 done
+fi;
 
 echo "Please enter the administrator contact email"
 read admin_email
@@ -85,8 +88,8 @@ apache_group=`groups $apache_user | head -n 1 | sed 's/ .*//'`
 
 # Place some example data
 
-cp -r ${base_dir}/example-data/corpora ${DATA_DIR}/examples
-cp -r ${base_dir}/example-data/tutorials ${DATA_DIR}/tutorials
+###cp -r ${base_dir}/example-data/corpora ${DATA_DIR}/examples
+###cp -r ${base_dir}/example-data/tutorials ${DATA_DIR}/tutorials
 
 # Make $work_dir_abs and $data_dir_abs writable by Apache
 
