@@ -88,8 +88,8 @@ apache_group=`groups $apache_user | head -n 1 | sed 's/ .*//'`
 
 # Place some example data
 
-###cp -r ${base_dir}/example-data/corpora ${DATA_DIR}/examples
-###cp -r ${base_dir}/example-data/tutorials ${DATA_DIR}/tutorials
+#####cp -r ${base_dir}/example-data/corpora ${DATA_DIR}/examples
+#####cp -r ${base_dir}/example-data/tutorials ${DATA_DIR}/tutorials
 
 # Make $work_dir_abs and $data_dir_abs writable by Apache
 
