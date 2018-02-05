@@ -41,6 +41,10 @@ from auth import allowed_to_read, AccessDeniedError
 from annlog import annotation_logging_active
 
 from itertools import chain
+import urllib
+import sys
+import os
+
 
 def _fill_type_configuration(nodes, project_conf, hotkey_by_type, all_connections=None):
     # all_connections is an optimization to reduce invocations of
@@ -411,13 +415,9 @@ def _is_hidden(file_name):
 def _listdir(directory):
     #return listdir(directory)
     try:
-        tmp = [f.decode('utf8') for f in listdir(directory.encode('utf8'))]
-        tmp = [f for f in tmp if not _is_hidden(f)]
-        tmp = [f for f in tmp if allowed_to_read(path_join(directory, f))]
-        return [f.encode('utf8') for f in tmp]
-        #assert_allowed_to_read(directory.decode('utf8'))
-        #return [f.decode('utf8') for f in listdir(directory) if not _is_hidden(f.decode('utf8'))
-        #        and allowed_to_read(path_join(directory.decode('utf8'), f.decode('utf8')))]
+        assert_allowed_to_read(directory)
+        return [f for f in listdir(directory) if not _is_hidden(f)
+                and allowed_to_read(path_join(directory, f.decode('utf8')))]
     except OSError, e:
         Messager.error("Error listing %s: %s" % (directory, e))
         raise AnnotationCollectionNotFoundError(directory)
@@ -605,6 +605,7 @@ class IsDirectoryError(ProtocolError):
         json_dic['exception'] = 'isDirectoryError'
         return json_dic
 
+
 #TODO: All this enrichment isn't a good idea, at some point we need an object
 def _enrich_json_with_text(j_dic, txt_file_path, raw_text=None):
     if raw_text is not None:
@@ -612,6 +613,8 @@ def _enrich_json_with_text(j_dic, txt_file_path, raw_text=None):
         text = raw_text
     else:
         # need to read raw text
+        #qqq = txt_file_path.encode('utf8')
+    
         try:
             with open_textfile(txt_file_path, 'r') as txt_file:
                 text = txt_file.read()
@@ -855,7 +858,7 @@ def _document_json_dict(document):
 def get_document(collection, document):
     directory = collection
     real_dir = real_directory(directory)
-    doc_path = path_join(real_dir, document)
+    doc_path = path_join(real_dir, urllib.unquote(document.encode('utf8')).decode('utf8'))
     return _document_json_dict(doc_path)
 
 def get_document_timestamp(collection, document):
